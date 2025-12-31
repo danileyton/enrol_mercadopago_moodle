@@ -1,0 +1,12 @@
+<div class="card shadow-sm p-3 mt-3">
+  <h4 class="fw-bold text-primary">Matricúlate con Mercado Pago</h4>
+  <p>Valor del curso: <strong>{{cost}}</strong></p>
+
+  {{#haslogin}}
+    <a href="{{payurl}}" class="btn btn-primary">Pagar con Mercado Pago</a>
+  {{/haslogin}}
+
+  {{^haslogin}}
+    <a href="{{payurl}}" class="btn btn-outline-primary">Inicia sesión o regístrate para pagar</a>
+  {{/haslogin}}
+</div>

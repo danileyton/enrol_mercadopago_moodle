@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="enrol/mercadopago/db" VERSION="2025111700" COMMENT="MercadoPago enrolment plugin tables" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <TABLES>
+
+        <!-- Tabla principal de pagos -->
+        <TABLE NAME="enrol_mercadopago" COMMENT="Registros de pagos de Mercado Pago para matr¨ªculas">
+            <FIELDS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+
+                <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="ID del curso"/>
+                <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="ID del usuario"/>
+                <FIELD NAME="instanceid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="ID de la instancia enrol"/>
+
+                <!-- SIN DEFAULT para evitar warning de XMLDB -->
+                <FIELD NAME="paymentid" TYPE="char" LENGTH="64" NOTNULL="true" COMMENT="ID de pago en Mercado Pago"/>
+                <FIELD NAME="external_reference" TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="Referencia compuesta courseid-userid-instanceid"/>
+                <FIELD NAME="status" TYPE="char" LENGTH="32" NOTNULL="true" COMMENT="Estado general (approved, pending, etc.)"/>
+
+                <FIELD NAME="status_detail" TYPE="char" LENGTH="255" NOTNULL="false" DEFAULT="" COMMENT="Detalle de estado (accredited, rejected, etc.)"/>
+                <FIELD NAME="amount" TYPE="number" LENGTH="12" DECIMALS="2" NOTNULL="true" DEFAULT="0.00" COMMENT="Monto pagado"/>
+                <FIELD NAME="currency" TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="CLP" COMMENT="Moneda (CLP, USD, etc.)"/>
+                <FIELD NAME="payment_method" TYPE="char" LENGTH="32" NOTNULL="false" DEFAULT="" COMMENT="M¨¦todo de pago (visa, account_money, etc.)"/>
+                <FIELD NAME="payment_type" TYPE="char" LENGTH="32" NOTNULL="false" DEFAULT="" COMMENT="Tipo de pago"/>
+                <FIELD NAME="merchant_order_id" TYPE="char" LENGTH="64" NOTNULL="false" DEFAULT="" COMMENT="Order ID asociado (si aplica)"/>
+                <FIELD NAME="date_created" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" COMMENT="Fecha de creaci¨®n del pago (timestamp)"/>
+                <FIELD NAME="date_approved" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" COMMENT="Fecha de aprobaci¨®n del pago (timestamp)"/>
+                <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Fecha de registro en Moodle (timestamp)"/>
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+            </KEYS>
+            <INDEXES>
+                <INDEX NAME="courseid_idx" UNIQUE="false" FIELDS="courseid"/>
+                <INDEX NAME="userid_idx" UNIQUE="false" FIELDS="userid"/>
+                <INDEX NAME="paymentid_uix" UNIQUE="true" FIELDS="paymentid"/>
+            </INDEXES>
+        </TABLE>
+
+        <!-- Tabla de logs -->
+        <TABLE NAME="enrol_mercadopago_log" COMMENT="Logs de eventos del plugin enrol_mercadopago">
+            <FIELDS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+                <FIELD NAME="message" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Mensaje de log"/>
+                <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Fecha del log (timestamp)"/>
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+            </KEYS>
+        </TABLE>
+
+    </TABLES>
+</XMLDB>

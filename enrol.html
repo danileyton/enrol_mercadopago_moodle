@@ -1,0 +1,114 @@
+<?php
+defined('MOODLE_INTERNAL') || die();
+
+global $USER, $COURSE, $CFG, $OUTPUT;
+
+// Moodle ya pasa la variable $instance desde enrol_page_hook().
+if (!isset($instance)) {
+    echo html_writer::div('⚠️ Error: no se encontró la instancia de matrícula.', 'alert alert-warning');
+    return;
+}
+
+$cost     = $instance->cost ?? 0;
+$currency = $instance->currency ?? 'CLP';
+
+// URLs de login/registro con retorno al curso.
+$loginurl = new moodle_url('/login/index.php', [
+    'courseid'   => $COURSE->id,
+    'instanceid' => $instance->id
+]);
+
+$signupurl = new moodle_url('/login/signup.php', [
+    'courseid' => $COURSE->id
+]);
+
+$coursecontext = context_course::instance($COURSE->id);
+
+// --- Si el usuario ya está matriculado ---
+if (is_enrolled($coursecontext, $USER)) {
+    echo html_writer::div('✅ Ya estás matriculado en este curso.', 'alert alert-success text-center my-4');
+    echo html_writer::div(
+        html_writer::link(
+            new moodle_url('/course/view.php', ['id' => $COURSE->id]),
+            'Ir al curso',
+            ['class' => 'btn btn-primary mt-2']
+        ),
+        'text-center'
+    );
+    return;
+}
+
+// --- Contenedor principal ---
+echo html_writer::start_div('enrol-mercadopago-container text-center p-4 border rounded shadow-sm my-4 bg-light');
+
+echo html_writer::tag('h4', 'Matrícula a través de Mercado Pago', ['class' => 'mb-3']);
+
+// Mostrar valor del curso (si está definido).
+if (!empty($cost)) {
+    echo html_writer::tag(
+        'p',
+        'Valor del curso: <strong>'.s($currency) .' $ '.number_format($cost, 0, ',', '.') .'</strong>'
+    );
+} else {
+    echo html_writer::tag(
+        'p',
+        'Este curso tiene habilitado el pago a través de <strong>Mercado Pago</strong>.'
+    );
+}
+
+// --- Mostrar opciones según estado de sesión ---
+if (isloggedin() && !isguestuser()) {
+
+    // Usuario autenticado → mostrar botón de pago directamente (sin modal, sin JS extra).
+    echo html_writer::tag(
+        'p',
+        'Para finalizar tu matrícula, realiza el pago con Mercado Pago haciendo clic en el siguiente botón:',
+        ['class' => 'mt-3']
+    );
+
+    echo html_writer::start_div('mt-3');
+    \enrol_mercadopago\form\payment_form::render_payment_button($COURSE, $USER, $instance);
+    echo html_writer::end_div();
+
+} else {
+
+    // Usuario no autenticado → mostrar botones simples de login / registro.
+    echo html_writer::tag(
+        'p',
+        'Para matricularte en este curso a través de <strong>Mercado Pago</strong>, primero debes iniciar sesión o crear una cuenta en la plataforma.',
+        ['class' => 'mt-3']
+    );
+
+    echo html_writer::start_div('d-flex flex-wrap justify-content-center gap-2 mt-3');
+
+    echo html_writer::link(
+        $loginurl,
+        'Iniciar sesión',
+        ['class' => 'btn btn-primary']
+    );
+
+    echo html_writer::link(
+        $signupurl,
+        'Crear cuenta nueva',
+        ['class' => 'btn btn-outline-secondary']
+    );
+
+    echo html_writer::end_div();
+}
+
+// --- Bloque visual Mercado Pago ---
+echo html_writer::start_div('mt-4 d-flex flex-column align-items-center small text-muted');
+
+$mp_logo_url = $CFG->wwwroot . '/enrol/mercadopago/pix/mercadopago.png';
+
+echo html_writer::empty_tag('img', [
+    'src'   => $mp_logo_url,
+    'alt'   => 'Mercado Pago',
+    'style' => 'height:30px; margin-bottom:5px;'
+]);
+
+echo html_writer::tag('span', 'Pagos seguros con Mercado Pago');
+
+echo html_writer::end_div(); // bloque visual
+
+echo html_writer::end_div(); // contenedor principal

@@ -1,0 +1,13 @@
+<div class="container text-center py-4">
+  <h3>Accede o crea una cuenta para continuar</h3>
+  <div class="d-flex justify-content-center gap-3 mt-4">
+    <a href="{{loginurl}}" class="btn btn-secondary px-4">Iniciar sesión</a>
+    <a href="{{signupurl}}" class="btn btn-primary px-4">Registrarse</a>
+  </div>
+
+  {{#recaptcha_enabled}}
+  <div class="mt-4">
+    <div class="g-recaptcha" data-sitekey="{{recaptcha_site_key}}"></div>
+  </div>
+  {{/recaptcha_enabled}}
+</div>

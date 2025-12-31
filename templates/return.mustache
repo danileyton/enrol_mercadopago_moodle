@@ -1,0 +1,50 @@
+{{!
+===============================================================================
+Template: enrol_mercadopago/return
+Muestra la página de resultado de pago (success / pending / failure)
+Compatible con Moodle 4.x / 5.x + Edwiser RemUI 5.03
+===============================================================================
+}}
+
+<div class="container text-center my-5 p-4 bg-white border rounded shadow-sm">
+
+    <div class="mb-4" aria-hidden="true">
+        {{#is_success}}
+            <div class="text-success" style="font-size:72px;">✅</div>
+        {{/is_success}}
+
+        {{#is_pending}}
+            <div class="text-warning" style="font-size:72px;">🕒</div>
+        {{/is_pending}}
+
+        {{#is_failure}}
+            <div class="text-danger" style="font-size:72px;">❌</div>
+        {{/is_failure}}
+    </div>
+
+    <h2 class="mb-3 {{colorclass}}">
+        {{{title}}}
+    </h2>
+
+    <p class="lead mb-4">
+        {{{message}}}
+    </p>
+
+    {{#courseurl}}
+        <a href="{{courseurl}}" class="btn btn-lg {{buttonclass}}">
+            {{{buttontext}}}
+        </a>
+    {{/courseurl}}
+
+    {{#redirect}}
+        <script>
+            setTimeout(function() {
+                window.location.href = '{{redirect}}';
+            }, 5000);
+        </script>
+        <p class="small text-muted mt-3">
+            Serás redirigido automáticamente en unos segundos...
+        </p>
+    {{/redirect}}
+
+</div>

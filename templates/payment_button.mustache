@@ -1,0 +1,18 @@
+<div class="text-center my-4">
+  <h4>Pago del curso: {{coursename}}</h4>
+  <p>Monto a pagar: <strong>{{amount}}</strong></p>
+
+  <script src="{{checkoutjs}}"></script>
+  <div id="mercadopago-button-container" class="mt-3"></div>
+
+  <script>
+    const mp = new MercadoPago('{{publickey}}', { locale: 'es-CL' });
+    mp.checkout({
+      preference: { id: '{{preferenceid}}' },
+      render: {
+        container: '#mercadopago-button-container',
+        label: 'Pagar con Mercado Pago'
+      }
+    });
+  </script>
+</div>
