@@ -56,3 +56,57 @@ $string['brandlogo'] = 'Logo para correos (URL)';
 
 $string['managecoupons'] = 'Gestión de cupones (Mercado Pago)';
 
+
+// --- Mensajes de cupones ---
+$string['coupon_empty'] = 'Por favor ingresa un código de cupón.';
+$string['coupon_invalid'] = '❌ Cupón no válido. Verifica el código e intenta nuevamente.';
+$string['coupon_inactive'] = '❌ Este cupón ya no está disponible.';
+$string['coupon_not_started'] = '⏳ Este cupón aún no está vigente.';
+$string['coupon_expired'] = '⏰ Este cupón ha expirado.';
+$string['coupon_exhausted'] = '🎫 Este cupón ha alcanzado su límite de usos.';
+$string['coupon_already_used'] = '⚠️ Ya has utilizado este cupón anteriormente.';
+$string['coupon_not_eligible'] = '🚫 No tienes acceso a este cupón. Contacta a soporte si crees que deberías poder usarlo.';
+$string['coupon_applied_percent'] = '✅ Cupón aplicado: {$a}% de descuento.';
+$string['coupon_applied_amount'] = '✅ Cupón aplicado: ${$a} de descuento.';
+$string['coupon_no_cohorts'] = 'Este cupón no tiene grupos de elegibilidad configurados.';
+
+// --- Gestión de cupones ---
+$string['coupon_code'] = 'Código del cupón';
+$string['coupon_type'] = 'Tipo de descuento';
+$string['coupon_type_percent'] = 'Porcentaje (%)';
+$string['coupon_type_amount'] = 'Monto fijo';
+$string['coupon_value'] = 'Valor';
+$string['coupon_validfrom'] = 'Válido desde';
+$string['coupon_validuntil'] = 'Válido hasta';
+$string['coupon_maxuses'] = 'Máximo de usos';
+$string['coupon_maxuses_help'] = '0 = ilimitado (sin límite de usos)';
+$string['coupon_usedcount'] = 'Veces usado';
+$string['coupon_active'] = 'Activo';
+$string['coupon_eligibility'] = 'Tipo de elegibilidad';
+$string['coupon_eligibility_open'] = 'Abierto (todos)';
+$string['coupon_eligibility_restricted'] = 'Restringido (cohortes)';
+$string['coupon_cohorts'] = 'Cohortes elegibles';
+$string['coupon_cohorts_help'] = 'Selecciona las cohortes cuyos miembros podrán usar este cupón.';
+$string['coupon_created'] = '✅ Cupón creado correctamente.';
+$string['coupon_updated'] = '✏️ Cupón actualizado correctamente.';
+$string['coupon_deleted'] = '🗑️ Cupón eliminado correctamente.';
+$string['coupon_date_error'] = '❌ La fecha de fin no puede ser anterior a la fecha de inicio.';
+
+// --- Tareas programadas ---
+$string['check_pending_payments_task'] = 'Verificar pagos pendientes en Mercado Pago';
+
+// --- Errores y configuración ---
+$string['configerror'] = 'Configuración de Mercado Pago incompleta. Contacte a soporte.';
+$string['debug'] = 'Modo debug';
+$string['debug_desc'] = 'Habilita logs detallados para depuración.';
+$string['mailstudents'] = 'Notificar a estudiantes';
+$string['mailteachers'] = 'Notificar a profesores';
+$string['mailadmins'] = 'Notificar a administradores';
+
+// --- Período de matrícula ---
+$string['enrolperiod'] = 'Duración de la matrícula';
+$string['enrolperiod_desc'] = 'Tiempo que durará la matrícula después de inscribirse (0 = ilimitado).';
+$string['enrolstartdate'] = 'Fecha de inicio';
+$string['enrolenddate'] = 'Fecha de fin';
+$string['enrolenddaterror'] = 'La fecha de fin no puede ser anterior a la de inicio.';
+$string['costerror'] = 'El costo debe ser un número válido.';

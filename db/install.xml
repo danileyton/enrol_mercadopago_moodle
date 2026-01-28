@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="enrol/mercadopago/db" VERSION="2025111700" COMMENT="MercadoPago enrolment plugin tables" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<XMLDB PATH="enrol/mercadopago/db" VERSION="2025012800" COMMENT="MercadoPago enrolment plugin tables" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <TABLES>
 
-        <!-- Tabla principal de pagos -->
-        <TABLE NAME="enrol_mercadopago" COMMENT="Registros de pagos de Mercado Pago para matrículas">
+        <!-- ================================================================
+             Tabla principal de pagos - CORREGIDA con campos faltantes
+             ================================================================ -->
+        <TABLE NAME="enrol_mercadopago" COMMENT="Registros de pagos de Mercado Pago para matr铆culas">
             <FIELDS>
                 <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
 
@@ -11,20 +13,36 @@
                 <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="ID del usuario"/>
                 <FIELD NAME="instanceid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="ID de la instancia enrol"/>
 
-                <!-- SIN DEFAULT para evitar warning de XMLDB -->
-                <FIELD NAME="paymentid" TYPE="char" LENGTH="64" NOTNULL="true" COMMENT="ID de pago en Mercado Pago"/>
-                <FIELD NAME="external_reference" TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="Referencia compuesta courseid-userid-instanceid"/>
-                <FIELD NAME="status" TYPE="char" LENGTH="32" NOTNULL="true" COMMENT="Estado general (approved, pending, etc.)"/>
-
+                <!-- Identificadores de Mercado Pago -->
+                <FIELD NAME="paymentid" TYPE="char" LENGTH="64" NOTNULL="false" COMMENT="ID de pago en Mercado Pago (se obtiene despu茅s del pago)"/>
+                <FIELD NAME="preference_id" TYPE="char" LENGTH="64" NOTNULL="false" COMMENT="ID de preferencia de MP (se obtiene al crear preferencia)"/>
+                <FIELD NAME="external_reference" TYPE="char" LENGTH="255" NOTNULL="false" COMMENT="Referencia compuesta courseid-userid-instanceid-timestamp"/>
+                
+                <!-- Estados del pago -->
+                <FIELD NAME="status" TYPE="char" LENGTH="32" NOTNULL="true" DEFAULT="initiated" COMMENT="Estado: initiated, pending, approved, failed, cancelled"/>
                 <FIELD NAME="status_detail" TYPE="char" LENGTH="255" NOTNULL="false" DEFAULT="" COMMENT="Detalle de estado (accredited, rejected, etc.)"/>
-                <FIELD NAME="amount" TYPE="number" LENGTH="12" DECIMALS="2" NOTNULL="true" DEFAULT="0.00" COMMENT="Monto pagado"/>
+                <FIELD NAME="confirmedby" TYPE="char" LENGTH="20" NOTNULL="false" COMMENT="Qui茅n confirm贸: IPN, RETURN, CRON"/>
+
+                <!-- Montos -->
+                <FIELD NAME="amount" TYPE="number" LENGTH="12" DECIMALS="2" NOTNULL="true" DEFAULT="0.00" COMMENT="Monto original"/>
+                <FIELD NAME="discount" TYPE="number" LENGTH="12" DECIMALS="2" NOTNULL="false" DEFAULT="0.00" COMMENT="Monto de descuento aplicado"/>
+                <FIELD NAME="final_amount" TYPE="number" LENGTH="12" DECIMALS="2" NOTNULL="false" DEFAULT="0.00" COMMENT="Monto final pagado"/>
                 <FIELD NAME="currency" TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="CLP" COMMENT="Moneda (CLP, USD, etc.)"/>
-                <FIELD NAME="payment_method" TYPE="char" LENGTH="32" NOTNULL="false" DEFAULT="" COMMENT="Método de pago (visa, account_money, etc.)"/>
+
+                <!-- Cup贸n -->
+                <FIELD NAME="couponcode" TYPE="char" LENGTH="50" NOTNULL="false" COMMENT="C贸digo de cup贸n aplicado"/>
+                <FIELD NAME="couponid" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="ID del cup贸n usado"/>
+
+                <!-- Informaci贸n de pago -->
+                <FIELD NAME="payment_method" TYPE="char" LENGTH="32" NOTNULL="false" DEFAULT="" COMMENT="M茅todo de pago (visa, account_money, etc.)"/>
                 <FIELD NAME="payment_type" TYPE="char" LENGTH="32" NOTNULL="false" DEFAULT="" COMMENT="Tipo de pago"/>
                 <FIELD NAME="merchant_order_id" TYPE="char" LENGTH="64" NOTNULL="false" DEFAULT="" COMMENT="Order ID asociado (si aplica)"/>
-                <FIELD NAME="date_created" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" COMMENT="Fecha de creación del pago (timestamp)"/>
-                <FIELD NAME="date_approved" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" COMMENT="Fecha de aprobación del pago (timestamp)"/>
+
+                <!-- Timestamps -->
+                <FIELD NAME="date_created" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" COMMENT="Fecha de creaci贸n del pago en MP (timestamp)"/>
+                <FIELD NAME="date_approved" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" COMMENT="Fecha de aprobaci贸n del pago (timestamp)"/>
                 <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Fecha de registro en Moodle (timestamp)"/>
+                <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" COMMENT="脷ltima modificaci贸n"/>
             </FIELDS>
             <KEYS>
                 <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
@@ -32,20 +50,99 @@
             <INDEXES>
                 <INDEX NAME="courseid_idx" UNIQUE="false" FIELDS="courseid"/>
                 <INDEX NAME="userid_idx" UNIQUE="false" FIELDS="userid"/>
-                <INDEX NAME="paymentid_uix" UNIQUE="true" FIELDS="paymentid"/>
+                <INDEX NAME="paymentid_idx" UNIQUE="false" FIELDS="paymentid"/>
+                <INDEX NAME="preference_id_idx" UNIQUE="false" FIELDS="preference_id"/>
+                <INDEX NAME="status_idx" UNIQUE="false" FIELDS="status"/>
+                <INDEX NAME="external_reference_uix" UNIQUE="true" FIELDS="external_reference"/>
             </INDEXES>
         </TABLE>
 
-        <!-- Tabla de logs -->
+        <!-- ================================================================
+             Tabla de logs - CORREGIDA con campo level
+             ================================================================ -->
         <TABLE NAME="enrol_mercadopago_log" COMMENT="Logs de eventos del plugin enrol_mercadopago">
             <FIELDS>
                 <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+                <FIELD NAME="level" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="info" COMMENT="Nivel: debug, info, warning, error"/>
                 <FIELD NAME="message" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Mensaje de log"/>
                 <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Fecha del log (timestamp)"/>
             </FIELDS>
             <KEYS>
                 <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
             </KEYS>
+            <INDEXES>
+                <INDEX NAME="level_idx" UNIQUE="false" FIELDS="level"/>
+                <INDEX NAME="timecreated_idx" UNIQUE="false" FIELDS="timecreated"/>
+            </INDEXES>
+        </TABLE>
+
+        <!-- ================================================================
+             Tabla de cupones - NUEVA (faltaba completamente)
+             ================================================================ -->
+        <TABLE NAME="enrol_mercadopago_coupons" COMMENT="Cupones de descuento para matr铆culas">
+            <FIELDS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+                <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="ID del curso (0 = global)"/>
+                <FIELD NAME="code" TYPE="char" LENGTH="50" NOTNULL="true" COMMENT="C贸digo del cup贸n (煤nico por curso)"/>
+                <FIELD NAME="type" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="percent" COMMENT="Tipo: percent o amount"/>
+                <FIELD NAME="value" TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="true" DEFAULT="0.00" COMMENT="Valor del descuento"/>
+                <FIELD NAME="eligibility_type" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="open" COMMENT="Tipo elegibilidad: open (todos) o restricted (cohortes)"/>
+                <FIELD NAME="validfrom" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" COMMENT="V谩lido desde (timestamp, 0=sin l铆mite)"/>
+                <FIELD NAME="validuntil" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" COMMENT="V谩lido hasta (timestamp, 0=sin l铆mite)"/>
+                <FIELD NAME="maxuses" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="M谩ximo de usos (0=ilimitado)"/>
+                <FIELD NAME="usedcount" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Veces usado"/>
+                <FIELD NAME="active" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" COMMENT="1=activo, 0=inactivo"/>
+                <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+                <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0"/>
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+            </KEYS>
+            <INDEXES>
+                <INDEX NAME="courseid_code_uix" UNIQUE="true" FIELDS="courseid, code"/>
+                <INDEX NAME="active_idx" UNIQUE="false" FIELDS="active"/>
+            </INDEXES>
+        </TABLE>
+
+        <!-- ================================================================
+             Tabla de relaci贸n cup贸n-cohortes - NUEVA (para elegibilidad)
+             ================================================================ -->
+        <TABLE NAME="enrol_mercadopago_coupon_cohorts" COMMENT="Relaci贸n entre cupones y cohortes elegibles">
+            <FIELDS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+                <FIELD NAME="couponid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="FK a enrol_mercadopago_coupons"/>
+                <FIELD NAME="cohortid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="FK a cohort"/>
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+                <KEY NAME="couponid_fk" TYPE="foreign" FIELDS="couponid" REFTABLE="enrol_mercadopago_coupons" REFFIELDS="id"/>
+                <KEY NAME="cohortid_fk" TYPE="foreign" FIELDS="cohortid" REFTABLE="cohort" REFFIELDS="id"/>
+            </KEYS>
+            <INDEXES>
+                <INDEX NAME="couponid_cohortid_uix" UNIQUE="true" FIELDS="couponid, cohortid"/>
+            </INDEXES>
+        </TABLE>
+
+        <!-- ================================================================
+             Tabla de uso de cupones - NUEVA (para evitar reutilizaci贸n)
+             ================================================================ -->
+        <TABLE NAME="enrol_mercadopago_coupon_usage" COMMENT="Registro de uso de cupones por usuario">
+            <FIELDS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+                <FIELD NAME="couponid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="FK a enrol_mercadopago_coupons"/>
+                <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="FK a user"/>
+                <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Curso donde se us贸"/>
+                <FIELD NAME="paymentid" TYPE="char" LENGTH="64" NOTNULL="false" COMMENT="ID del pago asociado"/>
+                <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+                <KEY NAME="couponid_fk" TYPE="foreign" FIELDS="couponid" REFTABLE="enrol_mercadopago_coupons" REFFIELDS="id"/>
+            </KEYS>
+            <INDEXES>
+                <INDEX NAME="couponid_userid_uix" UNIQUE="true" FIELDS="couponid, userid"/>
+                <INDEX NAME="userid_idx" UNIQUE="false" FIELDS="userid"/>
+            </INDEXES>
         </TABLE>
 
     </TABLES>

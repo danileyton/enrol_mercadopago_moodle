@@ -11,23 +11,34 @@ use MercadoPago\Exceptions\MPApiException;
 
 /**
  * Formulario principal de pago con Mercado Pago (con soporte de cupones AJAX).
+ * 
+ * CORRECCI√ìN CR√çTICA (BUG-001): 
+ * - Se crea registro en BD ANTES de crear preferencia en MP
+ * - Se usa external_reference √∫nico para tracking
+ * - Se guarda preference_id para correlaci√≥n posterior
+ * 
+ * @package    enrol_mercadopago
  */
 class payment_form {
 
     /**
-     * Renderiza el bot®Æn y formulario de pago.
+     * Renderiza el bot√≥n y formulario de pago.
+     * 
+     * @param object $course Objeto del curso
+     * @param object $user Objeto del usuario
+     * @param object $instance Instancia de enrol
      */
     public static function render_payment_button($course, $user, $instance) {
         global $CFG, $OUTPUT, $DB;
 
-        util::log('DEBUG: ejecutando payment_form.php', 'debug');
         require_once($CFG->dirroot . '/enrol/mercadopago/vendor/autoload.php');
 
         $token     = get_config('enrol_mercadopago', 'accesstoken');
         $publickey = get_config('enrol_mercadopago', 'publickey');
+        
         if (empty($token) || empty($publickey)) {
             echo \html_writer::div(
-                'Configuraci®Æn de Mercado Pago incompleta. Contacte a soporte.',
+                get_string('configerror', 'enrol_mercadopago') ?: 'Configuraci√≥n de Mercado Pago incompleta. Contacte a soporte.',
                 'alert alert-danger mt-3'
             );
             return;
@@ -38,7 +49,53 @@ class payment_form {
         $originalcost = (float)$instance->cost;
         $currency     = $instance->currency ?? 'CLP';
 
-        // Crear preferencia inicial (sin descuento)
+        // =====================================================================
+        // CORRECCI√ìN BUG-001: Crear registro ANTES de crear preferencia
+        // =====================================================================
+        
+        // Generar external_reference √∫nico
+        $externalref = sprintf('%d-%d-%d-%d', $course->id, $user->id, $instance->id, time());
+        
+        // Verificar si ya existe un registro pendiente para este usuario/curso/instancia
+        $existingrecord = $DB->get_record('enrol_mercadopago', [
+            'courseid' => $course->id,
+            'userid' => $user->id,
+            'instanceid' => $instance->id,
+            'status' => 'initiated'
+        ]);
+        
+        if ($existingrecord) {
+            // Actualizar el registro existente
+            $paymentrecord = $existingrecord;
+            $paymentrecord->external_reference = $externalref;
+            $paymentrecord->amount = $originalcost;
+            $paymentrecord->final_amount = $originalcost;
+            $paymentrecord->currency = $currency;
+            $paymentrecord->timemodified = time();
+            $DB->update_record('enrol_mercadopago', $paymentrecord);
+            util::log("üîÑ Registro de pago actualizado (id={$paymentrecord->id}, user={$user->id}, course={$course->id})");
+        } else {
+            // Crear nuevo registro con estado 'initiated'
+            $paymentrecord = new stdClass();
+            $paymentrecord->courseid = $course->id;
+            $paymentrecord->userid = $user->id;
+            $paymentrecord->instanceid = $instance->id;
+            $paymentrecord->external_reference = $externalref;
+            $paymentrecord->status = 'initiated';
+            $paymentrecord->amount = $originalcost;
+            $paymentrecord->final_amount = $originalcost;
+            $paymentrecord->discount = 0;
+            $paymentrecord->currency = $currency;
+            $paymentrecord->timecreated = time();
+            $paymentrecord->timemodified = time();
+            
+            $paymentrecord->id = $DB->insert_record('enrol_mercadopago', $paymentrecord);
+            util::log("‚úÖ Registro de pago creado (id={$paymentrecord->id}, user={$user->id}, course={$course->id}, ref={$externalref})");
+        }
+
+        // =====================================================================
+        // Crear preferencia en Mercado Pago
+        // =====================================================================
         $client = new PreferenceClient();
         try {
             $preference = $client->create([
@@ -53,10 +110,12 @@ class payment_form {
                     "name"    => $user->firstname,
                     "surname" => $user->lastname
                 ],
+                "external_reference" => $externalref,
                 "metadata" => [
                     "userid"     => $user->id,
                     "courseid"   => $course->id,
-                    "instanceid" => $instance->id
+                    "instanceid" => $instance->id,
+                    "payment_record_id" => $paymentrecord->id
                 ],
                 "back_urls" => [
                     "success" => $CFG->wwwroot . "/enrol/mercadopago/return.php?status=success&courseid={$course->id}&instanceid={$instance->id}&userid={$user->id}",
@@ -66,19 +125,34 @@ class payment_form {
                 "notification_url" => $CFG->wwwroot . "/enrol/mercadopago/ipn.php",
                 "auto_return"      => "approved"
             ]);
+
+            // =====================================================================
+            // CR√çTICO: Guardar preference_id en el registro
+            // =====================================================================
+            $paymentrecord->preference_id = $preference->id;
+            $paymentrecord->timemodified = time();
+            $DB->update_record('enrol_mercadopago', $paymentrecord);
+            
+            util::log("üé´ Preferencia MP creada (preference_id={$preference->id}, record_id={$paymentrecord->id})");
+
         } catch (MPApiException $e) {
-            util::log('Å7√4 Error creando preferencia inicial: ' . $e->getMessage(), 'error');
-            echo \html_writer::div('Error de conexi®Æn con Mercado Pago.', 'alert alert-danger mt-3');
+            util::log("‚ùå Error creando preferencia inicial: " . $e->getMessage(), 'error');
+            echo \html_writer::div('Error de conexi√≥n con Mercado Pago. Intenta nuevamente.', 'alert alert-danger mt-3');
+            return;
+        } catch (\Exception $e) {
+            util::log("‚ùå Error inesperado: " . $e->getMessage(), 'error');
+            echo \html_writer::div('Error inesperado. Contacta a soporte.', 'alert alert-danger mt-3');
             return;
         }
 
-        // --- HTML del formulario de cup®Æn + bot®Æn ---
+        // =====================================================================
+        // HTML del formulario de cup√≥n + bot√≥n de pago
+        // =====================================================================
         echo '<div class="container mt-3 mb-3" style="max-width:480px;">';
-        echo '<div class="fw-bold mb-2">' . htmlspecialchars("Å0Ü7Tienes un c®Ædigo de descuento?", ENT_QUOTES, "UTF-8") . '</div>';
-        echo '<p>Si tienes un c&oacute;digo de descuento ingresalo ac&aacute;</p>';
+        echo '<div class="fw-bold mb-2">¬øTienes un c√≥digo de descuento?</div>';
+        echo '<p>Si tienes un c√≥digo de descuento ingr√©salo ac√°</p>';
         echo '<div class="input-group mb-2">';
         echo '<input type="text" id="couponcode" class="form-control" placeholder="Ej: ALUMNO10">';
-        
         echo '<button id="applycoupon" class="btn btn-outline-primary" type="button">Aplicar</button>';
         echo '</div>';
         echo '<div id="couponmsg"></div>';
@@ -89,7 +163,10 @@ class payment_form {
         echo '<script src="https://sdk.mercadopago.com/js/v2"></script>';
         echo '<div id="wallet_container"></div>';
 
-        // --- Script principal ---
+        // Script principal con AJAX para cupones
+        $validateurl = $CFG->wwwroot . '/enrol/mercadopago/validate_coupon.php';
+        $recordid = $paymentrecord->id;
+        
         echo '<script>
 document.addEventListener("DOMContentLoaded", function() {
     const mp = new MercadoPago("' . $publickey . '", { locale: "es-CL" });
@@ -111,32 +188,35 @@ document.addEventListener("DOMContentLoaded", function() {
     const total = document.getElementById("totalamount");
     const original = ' . json_encode($originalcost) . ';
     const currency = ' . json_encode($currency) . ';
+    const recordId = ' . json_encode($recordid) . ';
 
     btn.addEventListener("click", function() {
         const code = input.value.trim();
         if (!code) {
-            msg.innerHTML = "<div class=\'alert alert-warning py-2\'>Por favor ingresa un c®Ædigo.</div>";
+            msg.innerHTML = "<div class=\"alert alert-warning py-2\">Por favor ingresa un c√≥digo.</div>";
             return;
         }
-        msg.innerHTML = "<div class=\'text-muted\'>Verificando...</div>";
+        msg.innerHTML = "<div class=\"text-muted\">Verificando...</div>";
+        btn.disabled = true;
 
-        fetch("' . $CFG->wwwroot . '/enrol/mercadopago/validate_coupon.php?courseid=' . $course->id . '&instanceid=' . $instance->id . '&code=" + encodeURIComponent(code))
+        fetch("' . $validateurl . '?courseid=' . $course->id . '&instanceid=' . $instance->id . '&recordid=" + recordId + "&code=" + encodeURIComponent(code))
         .then(res => res.json())
         .then(data => {
+            btn.disabled = false;
             if (data.valid) {
-                msg.innerHTML = "<div class=\'alert alert-success py-2\'>" + data.message + "</div>";
+                msg.innerHTML = "<div class=\"alert alert-success py-2\">" + data.message + "</div>";
                 total.textContent = new Intl.NumberFormat("es-CL").format(data.amount) + " " + data.currency;
                 renderButton(data.preference_id);
             } else {
-                msg.innerHTML = "<div class=\'alert alert-danger py-2\'>" + data.message + "</div>";
+                msg.innerHTML = "<div class=\"alert alert-danger py-2\">" + data.message + "</div>";
                 total.textContent = new Intl.NumberFormat("es-CL").format(original) + " " + currency;
-                renderButton("' . $preference->id . '"); // vuelve al monto original
+                renderButton("' . $preference->id . '");
             }
         })
-        .catch(() => {
-            msg.innerHTML = "<div class=\'alert alert-danger py-2\'>" + 
-                            "' . htmlspecialchars("Error de conexi®Æn con el servidor.", ENT_QUOTES, "UTF-8") . '" + 
-                            "</div>";
+        .catch((err) => {
+            btn.disabled = false;
+            msg.innerHTML = "<div class=\"alert alert-danger py-2\">Error de conexi√≥n con el servidor.</div>";
+            console.error("Error validando cup√≥n:", err);
         });
     });
 });

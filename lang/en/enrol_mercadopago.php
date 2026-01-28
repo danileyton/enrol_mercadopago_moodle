@@ -108,3 +108,57 @@ $string['brandheaderbg'] = 'Color de cabecera en correos';
 $string['brandlogo'] = 'Logo para correos (URL)';
 
 $string['managecoupons'] = 'Gestión de cupones (Mercado Pago)';
+
+// --- Coupon messages ---
+$string['coupon_empty'] = 'Please enter a coupon code.';
+$string['coupon_invalid'] = '❌ Invalid coupon. Please check the code and try again.';
+$string['coupon_inactive'] = '❌ This coupon is no longer available.';
+$string['coupon_not_started'] = '⏳ This coupon is not yet valid.';
+$string['coupon_expired'] = '⏰ This coupon has expired.';
+$string['coupon_exhausted'] = '🎫 This coupon has reached its usage limit.';
+$string['coupon_already_used'] = '⚠️ You have already used this coupon.';
+$string['coupon_not_eligible'] = '🚫 You are not eligible for this coupon. Contact support if you believe this is an error.';
+$string['coupon_applied_percent'] = '✅ Coupon applied: {$a}% discount.';
+$string['coupon_applied_amount'] = '✅ Coupon applied: ${$a} discount.';
+$string['coupon_no_cohorts'] = 'This coupon has no eligible cohorts configured.';
+
+// --- Coupon management ---
+$string['coupon_code'] = 'Coupon code';
+$string['coupon_type'] = 'Discount type';
+$string['coupon_type_percent'] = 'Percentage (%)';
+$string['coupon_type_amount'] = 'Fixed amount';
+$string['coupon_value'] = 'Value';
+$string['coupon_validfrom'] = 'Valid from';
+$string['coupon_validuntil'] = 'Valid until';
+$string['coupon_maxuses'] = 'Maximum uses';
+$string['coupon_maxuses_help'] = '0 = unlimited';
+$string['coupon_usedcount'] = 'Times used';
+$string['coupon_active'] = 'Active';
+$string['coupon_eligibility'] = 'Eligibility type';
+$string['coupon_eligibility_open'] = 'Open (everyone)';
+$string['coupon_eligibility_restricted'] = 'Restricted (cohorts)';
+$string['coupon_cohorts'] = 'Eligible cohorts';
+$string['coupon_cohorts_help'] = 'Select cohorts whose members can use this coupon.';
+$string['coupon_created'] = '✅ Coupon created successfully.';
+$string['coupon_updated'] = '✏️ Coupon updated successfully.';
+$string['coupon_deleted'] = '🗑️ Coupon deleted successfully.';
+$string['coupon_date_error'] = '❌ End date cannot be before start date.';
+
+// --- Scheduled tasks ---
+$string['check_pending_payments_task'] = 'Check pending payments in Mercado Pago';
+
+// --- Errors and configuration ---
+$string['configerror'] = 'Mercado Pago configuration incomplete. Please contact support.';
+$string['debug'] = 'Debug mode';
+$string['debug_desc'] = 'Enable detailed logs for debugging.';
+$string['mailstudents'] = 'Notify students';
+$string['mailteachers'] = 'Notify teachers';
+$string['mailadmins'] = 'Notify administrators';
+
+// --- Enrolment period ---
+$string['enrolperiod'] = 'Enrolment duration';
+$string['enrolperiod_desc'] = 'Duration of enrolment after registration (0 = unlimited).';
+$string['enrolstartdate'] = 'Start date';
+$string['enrolenddate'] = 'End date';
+$string['enrolenddaterror'] = 'End date cannot be before start date.';
+$string['costerror'] = 'Cost must be a valid number.';

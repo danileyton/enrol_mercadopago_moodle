@@ -11,7 +11,7 @@ defined('MOODLE_INTERNAL') || die();
 // Component name (frankly the plugin¡¯s unique identifier)
 $plugin->component = 'enrol_mercadopago';
 // Version number (used for upgrades; must match install.xml and upgrade.php)
-$plugin->version   = 2025111701;
+$plugin->version   = 2025012800;
 // Required Moodle core version (5.0 or later)
 $plugin->requires  = 2024100700;
 // Maturity level: ALPHA (dev), BETA, RC (release candidate), STABLE
